@@ -138,3 +138,4 @@ python/examples/*.png
 python/examples/media/*
 *.h5
 python/examples/*/*.h5
+python/examples/*/*/*.png
