@@ -20,8 +20,8 @@ def plot_hollow_taper_3d():
     # Use a fixed taper length for visualization
     Lt = 8.0 
     
-    # Define a finite height for the objects to make them 3D
-    height = 1.5
+    # Define a finite height for the cell in the z-direction for plotting
+    z_height = 1.5
 
     # Define the dielectric material
     Si = mp.Medium(epsilon=12.0)
@@ -33,7 +33,7 @@ def plot_hollow_taper_3d():
     input_cyl_outer = mp.Cylinder(
         center=mp.Vector3(-0.5 * Lt - 0.5 * Lw, 0, 0),
         radius=d1 / 2,
-        height=height,
+        height=Lw,  # Corrected: Length of the cylinder
         axis=mp.Vector3(x=1),
         material=Si
     )
@@ -43,7 +43,7 @@ def plot_hollow_taper_3d():
         center=mp.Vector3(0, 0, 0),
         radius=d1 / 2,
         radius2=d2 / 2,
-        height=Lt,
+        height=Lt,  # Correct: Length of the cone
         axis=mp.Vector3(x=1),
         material=Si
     )
@@ -52,7 +52,7 @@ def plot_hollow_taper_3d():
     output_cyl_outer = mp.Cylinder(
         center=mp.Vector3(0.5 * Lt + 0.5 * Lw, 0, 0),
         radius=d2 / 2,
-        height=height,
+        height=Lw,  # Corrected: Length of the cylinder
         axis=mp.Vector3(x=1),
         material=Si
     )
@@ -65,7 +65,7 @@ def plot_hollow_taper_3d():
     input_cyl_inner = mp.Cylinder(
         center=mp.Vector3(-0.5 * Lt - 0.5 * Lw, 0, 0),
         radius=r1_inner,
-        height=height,
+        height=Lw, # Corrected: Length of the cylinder
         axis=mp.Vector3(x=1),
         material=mp.air
     )
@@ -75,7 +75,7 @@ def plot_hollow_taper_3d():
         center=mp.Vector3(0, 0, 0),
         radius=r1_inner,
         radius2=r2_inner,
-        height=Lt,
+        height=Lt, # Correct: Length of the cone
         axis=mp.Vector3(x=1),
         material=mp.air
     )
@@ -84,7 +84,7 @@ def plot_hollow_taper_3d():
     output_cyl_inner = mp.Cylinder(
         center=mp.Vector3(0.5 * Lt + 0.5 * Lw, 0, 0),
         radius=r2_inner,
-        height=height,
+        height=Lw, # Corrected: Length of the cylinder
         axis=mp.Vector3(x=1),
         material=mp.air
     )
@@ -105,7 +105,7 @@ def plot_hollow_taper_3d():
     # Define a 3D cell large enough to contain the geometry
     sx = Lw + Lt + 4
     sy = d2 + 4
-    sz = height + 2
+    sz = z_height + 2
     cell_size = mp.Vector3(sx, sy, sz)
 
     sim = mp.Simulation(
