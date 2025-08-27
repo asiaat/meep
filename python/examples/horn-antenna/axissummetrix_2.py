@@ -1,5 +1,6 @@
 import meep as mp
 import numpy as np
+import matplotlib.pyplot as plt
 
 mp.verbosity(0)
 
@@ -66,6 +67,15 @@ def run_reflection_only():
 
     print("✅ Reflection-only simulation finished.")
     print("Saved: reflection_only.txt")
+    
+    # Plot geometry cross-section
+    sim.plot2D()
+    plt.title("Horn Antenna Geometry (r–z cross-section)")
+    plt.xlabel("r (radial direction)")
+    plt.ylabel("z (axis)")
+    plt.savefig("horn_geometry.png", dpi=150, bbox_inches="tight")
+    plt.show()
+
 
 if __name__ == "__main__":
     run_reflection_only()

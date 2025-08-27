@@ -13,11 +13,12 @@ def run_coaxial_horn_sim():
     height_mm = 10.0
 
     # Cone parameters (mm)
-    cone_height = 160.0
+    cone_height = 20.0
     cone_outer_r1 = 2.0
-    cone_outer_r2 = 80.0
+    cone_outer_r2 = 10.0
     cone_inner_r1 = 1.0
     cone_inner_r2 = 40.0
+    
 
     resolution = 5  # pixels/mm
 
@@ -83,17 +84,14 @@ def run_coaxial_horn_sim():
     # ------------------ Reflection/Transmission Monitors ------------------
     refl_region = mp.FluxRegion(center=mp.Vector3(0, 0, -0.5*height_mm+2.0),
                                 size=mp.Vector3(2*outer_radius+2, 2*outer_radius+2, 0))
-    refl = sim.add_flux(fcen, df, 100, refl_region)
+    refl = sim.add_flux(fcen, df, 2, refl_region)
 
-    # Transmission plane (field monitor for Er)
-    trans_region = mp.FluxRegion(center=mp.Vector3(0, 0, 0.5*height_mm+cone_height-10),
-                                 size=mp.Vector3(40, 40, 0))
-    trans = sim.add_flux(fcen, df, 200, trans_region)
+    
 
     # ------------------ Run ------------------
     #sim.run(until=50)   # time steps, adjust as needed
-    #sim.run(until_after_sources=mp.stop_when_fields_decayed(50, mp.Ez, mp.Vector3(0,0,0), 1e-3))
-    sim.run(until=50)
+    sim.run(until_after_sources=mp.stop_when_fields_decayed(50, mp.Ez, mp.Vector3(0,0,0), 1e-3))
+    #sim.run(until=2)
 
 
     # ------------------ Data extraction ------------------
@@ -101,12 +99,10 @@ def run_coaxial_horn_sim():
     freqs = mp.get_flux_freqs(refl)
     refl_data = mp.get_fluxes(refl)
 
-    # Transmission spectrum (S21 / Er magnitude-phase)
-    trans_data = mp.get_fluxes(trans)
-
+    
     # Save results
     np.savetxt("reflection_S11.txt", np.column_stack([freqs, refl_data]))
-    np.savetxt("transmission_S21.txt", np.column_stack([freqs, trans_data]))
+   
 
     print("Simulation complete. Reflection & transmission data saved.")
 
