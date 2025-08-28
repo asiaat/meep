@@ -1,6 +1,7 @@
 import meep as mp
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import animation
 
 
 def make_geometry(r, h, cthik, metal=True, n_cyl=2.0):
@@ -21,7 +22,7 @@ def make_geometry(r, h, cthik, metal=True, n_cyl=2.0):
 
 
 def make_simulation(r, h, cthik, resolution=25, metal=False):
-    """Build simulation object (without geometry if metal=False)."""
+    """Build simulation object (with optional scatterer)."""
     wvl_min = 2 * np.pi * r / 10
     wvl_max = 2 * np.pi * r / 2
     frq_min = 1 / wvl_max
@@ -65,6 +66,7 @@ def make_simulation(r, h, cthik, resolution=25, metal=False):
         sources=sources,
         dimensions=mp.CYLINDRICAL,
         m=-1,
+        force_complex_fields=True,  # correct keyword
     )
 
     return sim, frq_cen, dfrq, nfrq
@@ -85,6 +87,15 @@ def add_flux_monitors(sim, r, h, cthik, frq_cen, dfrq, nfrq):
         mp.FluxRegion(center=mp.Vector3(r), size=mp.Vector3(z=h))
     )
     return box_z1, box_z2, box_r
+
+
+def add_flux_region(sim, h, frq_cen, dfrq, nfrq):
+    """Add a single flux region at the bottom for reflection measurement."""
+    flux_region = sim.add_flux(
+        frq_cen, dfrq, nfrq,
+        mp.FluxRegion(center=mp.Vector3(0, 0, -0.5*h), size=mp.Vector3(sim.cell_size.x, 0, 0))
+    )
+    return flux_region
 
 
 def run_reference(r, h, cthik):
@@ -150,6 +161,74 @@ def plot_rta(freqs, R, T, A):
     plt.grid(True)
 
 
+def run_with_animation(r, h, cthik, metal=False, field_component=mp.Ez,
+                       until=200, frames=20):
+    """Run simulation and animate field evolution in cylindrical coordinates."""
+
+    # Build simulation
+    sim, frq_cen, dfrq, nfrq = make_simulation(r, h, cthik, metal=metal)
+
+    # Flux monitor
+    refl_fr = add_flux_region(sim, h, frq_cen, dfrq, nfrq)
+
+    # Run short simulation to initialize fields
+    sim.run(until=20)
+
+    # Get initial field snapshot
+    field_data = sim.get_array(
+        component=field_component,
+        center=mp.Vector3(0, 0, 0),
+        size=mp.Vector3(sim.cell_size.x, sim.cell_size.z)
+    )
+    if field_data.ndim == 1:
+        field_data = field_data[:, np.newaxis]
+
+    # Set up figure
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.set_title(f"Field evolution: {field_component}")
+    ax.set_xlabel("r (a.u.)")
+    ax.set_ylabel("z (a.u.)")
+
+    im = ax.imshow(
+        np.rot90(np.abs(field_data)),  # magnitude of complex field
+        interpolation="spline36",
+        cmap="RdBu",
+        extent=[0, sim.cell_size.x, -0.5 * sim.cell_size.z, 0.5 * sim.cell_size.z]
+    )
+
+    # Update function
+    def update(frame):
+        sim.run(until=(frame + 1) * until / frames)
+        field_data = sim.get_array(
+            component=field_component,
+            center=mp.Vector3(0, 0, 0),
+            size=mp.Vector3(sim.cell_size.x, sim.cell_size.z)
+        )
+        if field_data.ndim == 1:
+            field_data = field_data[:, np.newaxis]
+        im.set_array(np.rot90(np.abs(field_data)))
+        return [im]
+
+    ani = animation.FuncAnimation(
+        fig, update, frames=frames, blit=True, repeat=False
+    )
+    plt.show()
+
+    # Reflection spectrum
+    freqs = mp.get_flux_freqs(refl_fr)
+    refl = np.array(mp.get_fluxes(refl_fr))
+
+    plt.figure()
+    plt.plot(freqs, refl, "b-")
+    plt.xlabel("Frequency (a / λ)")
+    plt.ylabel("Reflected Flux")
+    plt.title("Reflection Spectrum")
+    plt.grid(True)
+    plt.show()
+
+    return freqs, refl
+
+
 def main():
     # parameters
     r, h, cthik = .7, 2.3, 0.5
@@ -157,7 +236,7 @@ def main():
     # reference run
     freqs, box_z1_data, box_z2_data, box_r_data, refl0 = run_reference(r, h, cthik)
 
-    # scatterer run (metal)
+    # scatterer run (dielectric)
     refl, tran, side = run_scatterer(r, h, cthik, box_z1_data, box_z2_data, box_r_data, metal=False)
 
     # analysis
@@ -165,7 +244,11 @@ def main():
 
     # plots
     plot_scattering(freqs, scatt_cs)
-    #plot_rta(freqs, R, T, A)
+    # plot_rta(freqs, R, T, A)
+
+    # animation
+    run_with_animation(r, h, cthik, metal=False, field_component=mp.Ez)
+
     plt.show()
 
 
