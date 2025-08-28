@@ -228,6 +228,81 @@ def run_with_animation(r, h, cthik, metal=False, field_component=mp.Ez,
 
     return freqs, refl
 
+def run_save_animation(r, h, cthik, metal=False, field_component=mp.Ez,
+                       until=200, frames=20, save_mp4=False, filename="animation.mp4"):
+    """Run simulation, animate field evolution, and optionally save as MP4."""
+
+    # Build simulation
+    sim, frq_cen, dfrq, nfrq = make_simulation(r, h, cthik, metal=metal)
+
+    # Flux monitor
+    refl_fr = add_flux_region(sim, h, frq_cen, dfrq, nfrq)
+
+    # Run short simulation to initialize fields
+    sim.run(until=20)
+
+    # Get initial field snapshot
+    field_data = sim.get_array(
+        component=field_component,
+        center=mp.Vector3(0, 0, 0),
+        size=mp.Vector3(sim.cell_size.x, sim.cell_size.z)
+    )
+    if field_data.ndim == 1:
+        field_data = field_data[:, np.newaxis]
+
+    # Set up figure
+    fig, ax = plt.subplots(figsize=(6, 5))
+    ax.set_title(f"Field evolution: {field_component}")
+    ax.set_xlabel("r (a.u.)")
+    ax.set_ylabel("z (a.u.)")
+
+    im = ax.imshow(
+        np.rot90(np.abs(field_data)),  # magnitude of complex field
+        interpolation="spline36",
+        cmap="RdBu",
+        extent=[0, sim.cell_size.x, -0.5 * sim.cell_size.z, 0.5 * sim.cell_size.z]
+    )
+
+    # Update function
+    def update(frame):
+        sim.run(until=(frame + 1) * until / frames)
+        field_data = sim.get_array(
+            component=field_component,
+            center=mp.Vector3(0, 0, 0),
+            size=mp.Vector3(sim.cell_size.x, sim.cell_size.z)
+        )
+        if field_data.ndim == 1:
+            field_data = field_data[:, np.newaxis]
+        im.set_array(np.rot90(np.abs(field_data)))
+        return [im]
+
+    ani = animation.FuncAnimation(
+        fig, update, frames=frames, blit=True, repeat=False
+    )
+
+    plt.show()
+
+    # Save as MP4 if requested
+    if save_mp4:
+        writer = animation.FFMpegWriter(fps=10, bitrate=1800)
+        ani.save(filename, writer=writer)
+        print(f"Animation saved as {filename}")
+
+    # Reflection spectrum
+    freqs = mp.get_flux_freqs(refl_fr)
+    refl = np.array(mp.get_fluxes(refl_fr))
+
+    plt.figure()
+    plt.plot(freqs, refl, "b-")
+    plt.xlabel("Frequency (a / λ)")
+    plt.ylabel("Reflected Flux")
+    plt.title("Reflection Spectrum")
+    plt.grid(True)
+    plt.show()
+
+    return freqs, refl
+
+
 
 def main():
     # parameters
@@ -247,7 +322,7 @@ def main():
     # plot_rta(freqs, R, T, A)
 
     # animation
-    run_with_animation(r, h, cthik, metal=False, field_component=mp.Ez)
+    run_save_animation(r, h, cthik, metal=False, field_component=mp.Ez,save_mp4=True)
 
     plt.show()
 
