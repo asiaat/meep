@@ -139,3 +139,5 @@ python/examples/media/*
 *.h5
 python/examples/*/*.h5
 python/examples/*/*/*.png
+
+python/nogeometry/meep_hn_cyl*/*
