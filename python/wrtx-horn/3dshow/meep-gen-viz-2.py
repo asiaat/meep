@@ -156,86 +156,72 @@ geom = [
         material=mp.metal
     )
 ]
+
+
 '''
 
-import meep as mp
-import matplotlib.pyplot as plt
-import numpy as np
 
-# This script models the 2D cross-section of the tapered hollow horn antenna
-# shown in the user-provided image. The simulation uses cylindrical coordinates.
+def plot_hollow_metal_cylinder_with_cone():
+    """
+    Creates and displays a 3D plot of a hollow metal cylinder
+    with a hollow conical extension on top.
+    """
+    # Cylinder parameters (mm)
+    outer_radius = 2.0    # outer radius of cylinder
+    inner_radius = 0.65   # hollow radius of cylinder
+    height_mm = 10.0      # height of cylinder
 
-# --- 1. Define Geometric Parameters from the Image ---
+    # Cone parameters (mm)
+    cone_height = 36.0
+    cone_outer_r1 = 2.0   # bottom outer radius (matches cylinder outer)
+    cone_outer_r2 = 15.0   # top outer radius
+    cone_inner_r1 = 1.0   # bottom inner radius (hollow)
+    cone_inner_r2 = 9.0   # top inner radius (hollow)
 
-# The dimensions are estimated from the "Horn cross-section" plot.
-horn_height = 20.0 # Height along the z-axis (from z=0 to z=40)
+    resolution = 10  # pixels/mm
 
-# Outer wall radii
-r1_outer = 1.0  # Radius at the base (z=0)
-r2_outer = 25.0 # Radius at the aperture (z=40)
+    # ------------------ Geometry ------------------
+    # Cylinder outer (metal replaced with finite epsilon for visualization)
+    outer_cyl = mp.Cylinder(
+        radius=outer_radius,
+        height=height_mm,
+        axis=mp.Vector3(0, 0, 1),
+        material=mp.Medium(epsilon=10.0)   # use mp.metal for real sim
+    )
 
-# Inner hollow radii
-r1_inner = 2.0  # Radius at the base (z=0)
-r2_inner = 15.0  # Radius at the aperture (z=40)
+    # Cylinder inner (air hollow)
+    inner_cyl = mp.Cylinder(
+        radius=inner_radius,
+        height=height_mm,
+        axis=mp.Vector3(0, 0, 1),
+        material=mp.air
+    )
 
-# The center of the cone objects will be at half the height.
-center_z = horn_height / 2
+    # Cone outer (metal)
+    outer_cone = mp.Cone(
+        radius=cone_outer_r1,
+        radius2=cone_outer_r2,
+        height=cone_height,
+        axis=mp.Vector3(0, 0, 1),
+        center=mp.Vector3(0, 0, 0.5 * height_mm + 0.5 * cone_height),
+        material=mp.Medium(epsilon=10.0)   # use mp.metal for real sim
+    )
 
-# --- 2. Set up Simulation Parameters ---
+    # Cone inner (air hollow)
+    inner_cone = mp.Cone(
+        radius=cone_inner_r1,
+        radius2=cone_inner_r2,
+        height=cone_height,
+        axis=mp.Vector3(0, 0, 1),
+        center=mp.Vector3(0, 0, 0.5 * height_mm + 0.5 * cone_height),
+        material=mp.air
+    )
 
-resolution = 20 # Pixels per distance unit
-
-# Define padding and PML thickness for the computational cell
-padding = 4.0
-pml_thickness = 2.0
-
-# Calculate cell dimensions to fit the geometry and PMLs
-cell_r = r2_outer + padding + pml_thickness
-cell_z = horn_height + 2 * padding + 2 * pml_thickness
-
-# In Meep 2D cylindrical coordinates, the y-dimension represents the radial 'r'
-# and the z-dimension represents the axial 'z'.
-cell_size = mp.Vector3(y=cell_r, z=cell_z)
-
-# Define the PML layers on all sides
-pml_layers = [mp.PML(thickness=pml_thickness)]
-
-# --- 3. Define Materials ---
-
-# Define a Perfect Electric Conductor (PEC) for the metal horn walls
-metal = mp.Medium(epsilon=mp.inf)
-# Define air, which will be used to "carve out" the hollow part
-air = mp.Medium(epsilon=1)
-
-# --- 4. Create the Geometry ---
-
-# The hollow cone is created by defining a large, solid metal cone and then
-# placing a slightly smaller air cone inside it. In Meep's geometry list,
-# the last object takes precedence in overlapping regions.
-geom = [
-    # 1. Outer Cone (Solid Metal)
-    mp.Cone(
-        center=mp.Vector3(z=0), # Centered at z=0 for compatibility
-        height=horn_height,
-        radius=r1_outer,
-        radius2=r2_outer,
-        axis=mp.Vector3(z=1),
-        material=metal,
-    ),
-    # 2. Inner Cone (Solid Air to create the hollow part)
-    mp.Cone(
-        center=mp.Vector3(z=0), # Centered at z=0 for compatibility
-        height=horn_height,
-        radius=r1_inner,
-        radius2=r2_inner,
-        axis=mp.Vector3(z=1),
-        material=air,
-    ),
-]
+    geometry = [outer_cyl, inner_cyl, outer_cone, inner_cone]
+    
+    return geometry
 
 
-
-
-
+geom = plot_hollow_metal_cylinder_with_cone()
 visualize_meep_geometry(geom)
 
