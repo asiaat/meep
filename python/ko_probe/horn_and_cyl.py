@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # --- Horn dimensions (example from figure b) ---
-R_aperture = 40       # mm (outer radius at mouth)
-R_throat = 13.65      # mm (outer radius at throat)
-L = 119               # mm (axial length)
+R_aperture = 20       # mm (outer radius at mouth)
+R_throat = 12      # mm (outer radius at throat)
+L = 120               # mm (axial length)
 
 # Wall thickness
-wall_thickness = 6.0  # mm
+wall_thickness = 3.0  # mm
 
 # Cylinder dimensions
 cyl_radius_outer = R_throat                 # same as horn throat radius (outer)
 cyl_radius_inner = cyl_radius_outer - wall_thickness
-cyl_height = 1.73 * L   # cylinder height (1.73 × horn height)
+cyl_height = 200.0  #1.73 * L   # cylinder height (1.73 × horn height)
 
 # piecewise function r(z) for outer and inner surfaces
 def r_outer(z):
@@ -23,8 +23,8 @@ def r_inner(z):
     return r_outer(z) - wall_thickness
 
 # --- Cylindrical coordinates ---
-nz = 200   # number of z samples
-nphi = 200 # number of angular samples
+nz = 150   # number of z samples
+nphi = 150 # number of angular samples
 phi = np.linspace(0, 2*np.pi, nphi)
 
 # Horn section (outer)
