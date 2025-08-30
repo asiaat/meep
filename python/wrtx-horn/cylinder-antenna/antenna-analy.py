@@ -411,6 +411,16 @@ def plot_ring_metrics(times, r0_list, T_list):
     ax[1].set_xlabel("time (sim units)"); ax[1].set_ylabel("T in [0,1]")
 
     plt.tight_layout(); plt.show()
+    
+
+def plot_energy_map(r_coords, z_coords, Er, Ez, Hphi, title="Energy density"):
+    U = energy_density(Er, Ez, Hphi).T
+    plt.figure(figsize=(7,5))
+    plt.imshow(U, extent=[z_coords[0], z_coords[-1], r_coords[0], r_coords[-1]],
+               origin='lower', aspect='auto', cmap='magma')
+    plt.xlabel("z"); plt.ylabel("r"); plt.title(title); plt.colorbar(label="u")
+    plt.show()
+
 
 
 # --- 4. MAIN WORKFLOW ---
@@ -431,7 +441,7 @@ def main():
     feed_inner_radius = 0.01
     feed_outer_radius = 0.03
     horn_inner_radius = 0.10
-    horn_outer_radius = 0.12
+    horn_outer_radius = 0.18
     horn_height = 0.30
 
     # Source Parameters
@@ -516,10 +526,15 @@ def main():
     plot_snapshot_fields(r_coords, z_coords,
                          frames["Er"][peak_idx], frames["Ez"][peak_idx], frames["Hphi"][peak_idx],
                          title_suffix=f"(t = {frames['t'][peak_idx]:.2f})")
+    
+    # Plot energy density (donut structure)
+    plot_energy_map(r_coords, z_coords, Erk, Ezk, Hphik,
+                    title=f"Energy density at t={frames['t'][peak_idx]:.2f}")
+
 
 
     print("Step 4: Running simulation...")
-    sim.run(until=50) # Increased runtime to see wave propagate further
+    sim.run(until=100) # Increased runtime to see wave propagate further
 
     print("Step 5: Visualizing results...")
     plot_simulation_results(sim, sr, sz)
