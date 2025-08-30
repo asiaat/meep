@@ -6,8 +6,7 @@ from scipy.integrate import cumulative_trapezoid
 # --- 1. GEOMETRY DEFINITION ---
 def make_horn_antenna_geometry(
     r_in_start, r_in_end, r_out_start, r_out_end, h,
-    taper_profile='linear', n_slices=100, material=mp.metal
-):
+    taper_profile='linear', n_slices=100, material=mp.metal):
     """
     Generates a list of MEEP geometry objects for a horn-like antenna.
     This function approximates the horn shape by stacking thin annular slices
