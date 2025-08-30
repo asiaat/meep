@@ -508,20 +508,22 @@ def main():
     Main function to define parameters and orchestrate the simulation workflow.
     """
     # Simulation Parameters
-    resolution = 80
+    resolution = 60
     dpml = 1.0
     sr = 0.5  # Radial size
     sz = 3.0  # Axial size
     cell_size = mp.Vector3(sr + dpml, 0, sz + 2 * dpml)
     pml_layers = [mp.PML(thickness=dpml, direction=mp.X), 
                   mp.PML(thickness=dpml, direction=mp.Z)]
-
-    # Antenna Parameters
-    feed_inner_radius = 0.01
-    feed_outer_radius = 0.03
-    horn_inner_radius = 0.07
-    horn_outer_radius = 0.16
-    horn_height = 0.30
+    # Coaxial feed section at the base
+    feed_inner_radius = 0.006
+    feed_outer_radius = 0.01
+    
+    # Horn opening at the top
+    horn_inner_radius = 0.03
+    horn_outer_radius = 0.12
+    
+    horn_height = 0.50
 
     # Source Parameters
     fcen = 6e9 # Note: Meep units are based on c=1. For realism, you'd scale dimensions.
@@ -569,7 +571,7 @@ def main():
     sim.run(
         mp.at_every(every_dt, snap_cb),
         mp.at_every(0.2*every_dt, probe_cb),  # sample probes more often if you like
-        until=50
+        until=100
     )
 
     # ---- post-run: grab flux/N2F if needed ----
@@ -613,7 +615,7 @@ def main():
 
 
     print("Step 4: Running simulation...")
-    sim.run(until=100) # Increased runtime to see wave propagate further
+    sim.run(until=200) # Increased runtime to see wave propagate further
 
     print("Step 5: Visualizing results...")
     plot_simulation_results(sim, sr, sz)

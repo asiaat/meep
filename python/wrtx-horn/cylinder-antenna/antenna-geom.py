@@ -113,15 +113,15 @@ if __name__ == '__main__':
     # We will assume meters, following the document's convention.
     
     # Coaxial feed section at the base
-    feed_inner_radius = 0.01
-    feed_outer_radius = 0.012
+    feed_inner_radius = 0.006
+    feed_outer_radius = 0.01
     
     # Horn opening at the top
-    horn_inner_radius = 0.04
-    horn_outer_radius = 0.10
+    horn_inner_radius = 0.05
+    horn_outer_radius = 0.12
     
     # Height of the horn
-    horn_height = 0.30
+    horn_height = 0.40
 
     # Choose the flare profile: 'linear', 'quadratic', 'exponential'
     profile = 'linear'
